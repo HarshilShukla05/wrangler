@@ -41,8 +41,8 @@ public class SetTransientVariableTest {
 
   @Test
   public void testSettingOfVariable() throws Exception {
-    String[] recipe = new String[]{
-      "set-variable test fwd == 0 ? A : test"
+    String[] recipe = new String[] {
+        "set-variable test fwd == 0 ? A : test"
     };
 
     List<Row> rows = new ArrayList<>();

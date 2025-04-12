@@ -1,19 +1,3 @@
-/*
- * Copyright © 2017-2019 Cask Data, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
 grammar Directives;
 
 options {
@@ -21,74 +5,63 @@ options {
 }
 
 @lexer::header {
-/*
- * Copyright © 2017-2019 Cask Data, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
+  /*
+   * Copyright © 2017-2019 Cask Data, Inc.
+   * Licensed under the Apache License, Version 2.0 (the "License");
+   * you may not use this file except in compliance with the License.
+   * You may obtain a copy of the License at
+   * http://www.apache.org/licenses/LICENSE-2.0
+   */
 }
 
-/**
- * Parser Grammar for recognizing tokens and constructs of the directives language.
- */
 recipe
  : statements EOF
  ;
 
 statements
- :  ( Comment | macro | directive ';' | pragma ';' | ifStatement)*
+ :  ( Comment | macro | directive SColon | pragma SColon | ifStatement )*
  ;
 
 directive
  : command
-  (   codeblock
-    | identifier
-    | macro
-    | text
-    | number
-    | bool
-    | column
-    | colList
-    | numberList
-    | boolList
-    | stringList
-    | numberRanges
-    | properties
-  )*?
-  ;
+   ( codeblock
+   | identifier
+   | macro
+   | text
+   | number
+   | bool
+   | column
+   | colList
+   | numberList
+   | boolList
+   | stringList
+   | numberRanges
+   | properties
+   )*?
+ ;
 
 ifStatement
-  : ifStat elseIfStat* elseStat? '}'
-  ;
+ : ifStat elseIfStat* elseStat? CBrace
+ ;
 
 ifStat
-  : 'if' expression '{' statements
-  ;
+ : If expression OBrace statements
+ ;
 
 elseIfStat
-  : '}' 'else' 'if' expression '{' statements
-  ;
+ : CBrace Else If expression OBrace statements
+ ;
 
 elseStat
-  : '}' 'else' '{' statements
-  ;
+ : CBrace Else OBrace statements
+ ;
 
 expression
-  : '(' (~'(' | expression)* ')'
-  ;
+ : OParen (~OParen | expression)* CParen
+ ;
 
 forStatement
- : 'for' '(' Identifier '=' expression ';' expression ';' expression ')' '{'  statements '}'
+ : For OParen Identifier Assign expression SColon expression SColon expression CParen OBrace statements CBrace
  ;
 
 macro
@@ -96,19 +69,19 @@ macro
  ;
 
 pragma
- : '#pragma' (pragmaLoadDirective | pragmaVersion)
+ : Hash Pragma (pragmaLoadDirective | pragmaVersion)
  ;
 
 pragmaLoadDirective
- : 'load-directives' identifierList
+ : LoadDirectives identifierList
  ;
 
 pragmaVersion
- : 'version' Number
+ : Version Number
  ;
 
 codeblock
- : 'exp' Space* ':' condition
+ : Exp Space* Colon condition
  ;
 
 identifier
@@ -116,35 +89,35 @@ identifier
  ;
 
 properties
- : 'prop' ':' OBrace (propertyList)+  CBrace
- | 'prop' ':' OBrace OBrace (propertyList)+ CBrace { notifyErrorListeners("Too many start paranthesis"); }
- | 'prop' ':' OBrace (propertyList)+ CBrace CBrace { notifyErrorListeners("Too many start paranthesis"); }
- | 'prop' ':' (propertyList)+ CBrace { notifyErrorListeners("Missing opening brace"); }
- | 'prop' ':' OBrace (propertyList)+  { notifyErrorListeners("Missing closing brace"); }
+ : Prop Colon OBrace (propertyList)+  CBrace
+ | Prop Colon OBrace OBrace (propertyList)+ CBrace { notifyErrorListeners("Too many start paranthesis"); }
+ | Prop Colon OBrace (propertyList)+ CBrace CBrace { notifyErrorListeners("Too many start paranthesis"); }
+ | Prop Colon (propertyList)+ CBrace { notifyErrorListeners("Missing opening brace"); }
+ | Prop Colon OBrace (propertyList)+  { notifyErrorListeners("Missing closing brace"); }
  ;
 
 propertyList
- : property (',' property)*
+ : property (Comma property)*
  ;
 
 property
- : Identifier '=' ( text | number | bool )
+ : Identifier Assign ( text | number | bool )
  ;
 
 numberRanges
- : numberRange ( ',' numberRange)*
+ : numberRange (Comma numberRange)*
  ;
 
 numberRange
- : Number ':' Number '=' value
+ : Number Colon Number Assign value
  ;
 
 value
- : String | Number | Column | Bool
+ : String | Number | Column | Bool | BYTE_SIZE | TIME_DURATION
  ;
 
 ecommand
- : '!' Identifier
+ : External Identifier
  ;
 
 config
@@ -176,28 +149,28 @@ command
  ;
 
 colList
- : Column (','  Column)+
+ : Column (Comma Column)+
  ;
 
 numberList
- : Number (',' Number)+
+ : Number (Comma Number)+
  ;
 
 boolList
- : Bool (',' Bool)+
+ : Bool (Comma Bool)+
  ;
 
 stringList
- : String (',' String)+
+ : String (Comma String)+
  ;
 
 identifierList
- : Identifier (',' Identifier)*
+ : Identifier (Comma Identifier)*
  ;
 
 
 /*
- * Following are the Lexer Rules used for tokenizing the recipe.
+ * Lexer Rules
  */
 OBrace   : '{';
 CBrace   : '}';
@@ -246,7 +219,16 @@ Pipe     : '|';
 BackSlash: '\\';
 Dollar   : '$';
 Tilde    : '~';
+Hash     : '#';
 
+If    : 'if';
+Else  : 'else';
+For   : 'for';
+Exp   : 'exp';
+Prop  : 'prop';
+Version : 'version';
+LoadDirectives : 'load-directives';
+Pragma : 'pragma';
 
 Bool
  : 'true'
@@ -254,8 +236,14 @@ Bool
  ;
 
 Number
- : Int ('.' Digit*)?
+ : Int (Dot Digit*)?
  ;
+
+BYTE_SIZE: Digit+ (Dot Digit+)? BYTE_UNIT;
+TIME_DURATION: Digit+ (Dot Digit+)? TIME_UNIT;
+
+fragment BYTE_UNIT: [KkMmGgTt][Bb];
+fragment TIME_UNIT: ('ms' | 's' | 'm' | 'h');
 
 Identifier
  : [a-zA-Z_\-] [a-zA-Z_0-9\-]*
@@ -270,8 +258,8 @@ Column
  ;
 
 String
- : '\'' ( EscapeSequence | ~('\'') )* '\''
- | '"'  ( EscapeSequence | ~('"') )* '"'
+ : '\'' ( EscapeSequence | ~('\''))* '\''
+ | '"'  ( EscapeSequence | ~('"'))* '"'
  ;
 
 EscapeSequence
@@ -293,7 +281,7 @@ UnicodeEscape
    ;
 
 fragment
-   HexDigit : ('0'..'9'|'a'..'f'|'A'..'F') ;
+HexDigit : ('0'..'9'|'a'..'f'|'A'..'F') ;
 
 Comment
  : ('//' ~[\r\n]* | '/*' .*? '*/' | '--' ~[\r\n]* ) -> skip

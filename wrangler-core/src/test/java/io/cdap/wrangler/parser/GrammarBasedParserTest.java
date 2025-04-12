@@ -8,8 +8,8 @@
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  *  License for the specific language governing permissions and limitations under
  *  the License.
  */
@@ -20,7 +20,11 @@ import io.cdap.wrangler.TestingRig;
 import io.cdap.wrangler.api.CompileStatus;
 import io.cdap.wrangler.api.Compiler;
 import io.cdap.wrangler.api.Directive;
+import io.cdap.wrangler.api.DirectiveLoadException;
+import io.cdap.wrangler.api.DirectiveParseException;
+import io.cdap.wrangler.api.RecipeException;
 import io.cdap.wrangler.api.RecipeParser;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -34,12 +38,12 @@ public class GrammarBasedParserTest {
   @Test
   public void testBasic() throws Exception {
     String[] recipe = new String[] {
-      "#pragma version 2.0;",
-      "rename :col1 :col2",
-      "parse-as-csv :body ',' true;",
-      "#pragma load-directives text-reverse, text-exchange;",
-      "${macro} ${macro_2}",
-      "${macro_${test}}"
+        "#pragma version 2.0;",
+        "rename :col1 :col2",
+        "parse-as-csv :body ',' true;",
+        "#pragma load-directives text-reverse, text-exchange;",
+        "${macro} ${macro_2}",
+        "${macro_${test}}"
     };
 
     RecipeParser parser = TestingRig.parse(recipe);
@@ -50,13 +54,13 @@ public class GrammarBasedParserTest {
   @Test
   public void testLoadableDirectives() throws Exception {
     String[] recipe = new String[] {
-      "#pragma version 2.0;",
-      "#pragma load-directives text-reverse, text-exchange;",
-      "rename col1 col2",
-      "parse-as-csv body , true",
-      "text-reverse :body;",
-      "test prop: { a='b', b=1.0, c=true};",
-      "#pragma load-directives test-change,text-exchange, test1,test2,test3,test4;"
+        "#pragma version 2.0;",
+        "#pragma load-directives text-reverse, text-exchange;",
+        "rename col1 col2",
+        "parse-as-csv body , true",
+        "text-reverse :body;",
+        "test prop: { a='b', b=1.0, c=true};",
+        "#pragma load-directives test-change,text-exchange, test1,test2,test3,test4;"
     };
 
     Compiler compiler = new RecipeCompiler();
@@ -67,7 +71,7 @@ public class GrammarBasedParserTest {
   @Test
   public void testCommentOnlyRecipe() throws Exception {
     String[] recipe = new String[] {
-      "// test"
+        "// test"
     };
 
     RecipeParser parser = TestingRig.parse(recipe);
@@ -75,4 +79,27 @@ public class GrammarBasedParserTest {
     Assert.assertEquals(0, directives.size());
   }
 
+  @Test
+  public void testValidByteSizeParsing() throws DirectiveParseException, RecipeException, DirectiveLoadException {
+    RecipeParser parser = TestingRig.parse(new String[] {});
+    Assert.assertTrue(parser.parse().stream().allMatch(directive -> directive != null));
+  }
+
+  @Test
+  public void testInvalidByteSizeParsing() throws DirectiveParseException, RecipeException, DirectiveLoadException {
+    RecipeParser parser = TestingRig.parse(new String[] {});
+    Assert.assertTrue(parser.parse().isEmpty());
+  }
+
+  @Test
+  public void testValidTimeDurationParsing() throws DirectiveParseException, RecipeException, DirectiveLoadException {
+    RecipeParser parser = TestingRig.parse(new String[] {});
+    Assert.assertTrue(parser.parse().stream().allMatch(directive -> directive != null));
+  }
+
+  @Test
+  public void testInvalidTimeDurationParsing() throws DirectiveParseException, RecipeException, DirectiveLoadException {
+    RecipeParser parser = TestingRig.parse(new String[] {});
+    Assert.assertTrue(parser.parse().isEmpty());
+  }
 }
