@@ -36,6 +36,7 @@ import java.util.List;
 /**
  * A directive to aggregate byte size and time duration across rows.
  */
+
 @PublicEvolving
 public class AggregateSizeAndTime implements Directive {
 
@@ -82,8 +83,10 @@ public class AggregateSizeAndTime implements Directive {
     @Override
     public List<Row> execute(List<Row> rows, ExecutorContext ctx) throws DirectiveExecutionException {
         TransientStore store = ctx.getTransientStore();
+        List<Row> result = new java.util.ArrayList<>();
 
-        for (Row row : rows) {
+        for (int i = 0; i < rows.size(); i++) {
+            Row row = rows.get(i);
             Object sizeObj = row.getValue(sourceSizeCol);
             Object timeObj = row.getValue(sourceTimeCol);
 
@@ -97,10 +100,53 @@ public class AggregateSizeAndTime implements Directive {
             store.set(TransientVariableScope.GLOBAL, "sizeTotal", sizeTotal + bytes);
             store.set(TransientVariableScope.GLOBAL, "timeTotal", timeTotal + millis);
             store.set(TransientVariableScope.GLOBAL, "count", count + 1);
+
+            // If it's the last row, emit the aggregate row
+            if (i == rows.size() - 1) {
+                long finalSize = sizeTotal + bytes;
+                long finalTime = timeTotal + millis;
+                int finalCount = count + 1;
+
+                if ("average".equalsIgnoreCase(aggType) && finalCount > 0) {
+                    finalSize = finalSize / finalCount;
+                    finalTime = finalTime / finalCount;
+                }
+
+                Row aggregateRow = new Row();
+                aggregateRow.add(targetSizeCol, convertSize(finalSize, sizeUnit));
+                aggregateRow.add(targetTimeCol, convertTime(finalTime, timeUnit));
+
+                result.add(aggregateRow);
+            }
         }
 
-        return rows;
+        return result;
     }
+
+    // @Override
+    // public void finalize() throws DirectiveExecutionException {
+    // TransientStore store = ctx.getTransientStore();
+
+    // long sizeTotal = store.get("sizeTotal") == null ? 0L : (long)
+    // store.get("sizeTotal");
+    // long timeTotal = store.get("timeTotal") == null ? 0L : (long)
+    // store.get("timeTotal");
+    // int count = store.get("count") == null ? 0 : (int) store.get("count");
+
+    // long finalSize = sizeTotal;
+    // long finalTime = timeTotal;
+
+    // if ("average".equalsIgnoreCase(aggType) && count > 0) {
+    // finalSize = sizeTotal / count;
+    // finalTime = timeTotal / count;
+    // }
+
+    // Row result = new Row();
+    // result.add(targetSizeCol, convertSize(finalSize, sizeUnit));
+    // result.add(targetTimeCol, convertTime(finalTime, timeUnit));
+
+    // return List.of(result); //
+    // }
 
     @Override
     public void destroy() {
@@ -162,4 +208,9 @@ public class AggregateSizeAndTime implements Directive {
                 return millis;
         }
     }
+
+    public AggregateSizeAndTime() {
+        // required by Reflections for loading system directives
+    }
+
 }

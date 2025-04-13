@@ -34,7 +34,7 @@ public class TimeDuration implements Token {
         this.value = Double.parseDouble(value.substring(0, unitIndex));
         this.unit = value.substring(unitIndex);
 
-        if(this.value < 0) {
+        if (this.value < 0) {
             throw new IllegalArgumentException("Time duration can not be negative: " + value);
         }
 

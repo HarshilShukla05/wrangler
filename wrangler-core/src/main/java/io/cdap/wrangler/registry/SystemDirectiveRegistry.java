@@ -31,18 +31,28 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
- * This class is implementation of {@link DirectiveRegistry} for maintaining a registry
- * of system provided directives. The directives maintained within this registry and
- * present and loaded by the <tt>Classloader</tt> that is responsible for loading this
+ * This class is implementation of {@link DirectiveRegistry} for maintaining a
+ * registry
+ * of system provided directives. The directives maintained within this registry
+ * and
+ * present and loaded by the <tt>Classloader</tt> that is responsible for
+ * loading this
  * class.
  *
- * <p>In order to load the directives, this class scans through all classes that
- * implement the interface {@link Directive}. Instead of scanning entire JAR, it uses the
- * package name a starting point for scanning the classes that implement the <tt>Directive</tt>
- * interface.</p>
+ * <p>
+ * In order to load the directives, this class scans through all classes that
+ * implement the interface {@link Directive}. Instead of scanning entire JAR, it
+ * uses the
+ * package name a starting point for scanning the classes that implement the
+ * <tt>Directive</tt>
+ * interface.
+ * </p>
  *
- * <p>For every class found, this scan will create a instance of {@link DirectiveInfo}
- * object and store it in the registry.</p>
+ * <p>
+ * For every class found, this scan will create a instance of
+ * {@link DirectiveInfo}
+ * object and store it in the registry.
+ * </p>
  *
  * @see UserDirectiveRegistry
  * @see CompositeDirectiveRegistry
@@ -54,9 +64,12 @@ public final class SystemDirectiveRegistry implements DirectiveRegistry {
 
   static {
     try {
+      // System.out.println("Initializing SystemDirectiveRegistry...");
       INSTANCE = new SystemDirectiveRegistry();
+      // System.out.println("SystemDirectiveRegistry initialized successfully.");
     } catch (DirectiveLoadException e) {
       // This shouldn't happen
+      // e.printStackTrace(); // Log the error
       throw new RuntimeException("Failed to load system directives", e);
     }
   }
@@ -71,20 +84,28 @@ public final class SystemDirectiveRegistry implements DirectiveRegistry {
   }
 
   /**
-   * This constructor uses the user provided <tt>namespace</tt> as starting pointing
+   * This constructor uses the user provided <tt>namespace</tt> as starting
+   * pointing
    * for scanning classes that implement the interface {@link Directive}.
    *
    * @param namespaces that is used as starting point for scanning classes.
-   * @throws DirectiveLoadException thrown if there are any issue loading the directive.
+   * @throws DirectiveLoadException thrown if there are any issue loading the
+   *                                directive.
    */
   public SystemDirectiveRegistry(List<String> namespaces) throws DirectiveLoadException {
     Map<String, DirectiveInfo> registry = new HashMap<>();
     namespaces.add(PACKAGE);
+
+    namespaces.add("io.cdap.wrangler.directives.transformation"); // To include custom directive package
+
     for (String namespace : namespaces) {
       try {
+        System.out.println("Scanning namespace: " + namespace);
         Reflections reflections = new Reflections(namespace);
         Set<Class<? extends Directive>> system = reflections.getSubTypesOf(Directive.class);
         for (Class<? extends Directive> directive : system) {
+
+          System.out.println("Found directive: " + directive.getName()); // TEMP LOG
           DirectiveInfo info = DirectiveInfo.fromSystem(directive);
           registry.put(info.name(), info);
         }
@@ -96,7 +117,8 @@ public final class SystemDirectiveRegistry implements DirectiveRegistry {
   }
 
   /**
-   * Given the name of the directive, returns the information related to the directive.
+   * Given the name of the directive, returns the information related to the
+   * directive.
    *
    * @param name of the directive to be retrieved from the registry.
    * @return an instance of {@link DirectiveInfo} if found, else null.
@@ -107,8 +129,10 @@ public final class SystemDirectiveRegistry implements DirectiveRegistry {
   }
 
   /**
-   * Given the name of the directive, returns the information related to the directive.
-   * This method is specific to system registry as system registry does not need namespace
+   * Given the name of the directive, returns the information related to the
+   * directive.
+   * This method is specific to system registry as system registry does not need
+   * namespace
    * parameter.
    *
    * @param name of the directive to be retrieved from the registry.
@@ -130,8 +154,9 @@ public final class SystemDirectiveRegistry implements DirectiveRegistry {
   }
 
   /**
-   * @return Returns an iterator to iterate through all the <code>DirectiveInfo</code> objects
-   * maintained within the registry.
+   * @return Returns an iterator to iterate through all the
+   *         <code>DirectiveInfo</code> objects
+   *         maintained within the registry.
    */
   @Override
   public Iterable<DirectiveInfo> list(String namespace) {

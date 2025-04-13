@@ -25,7 +25,9 @@ public class SystemDirectiveRegistryTest {
 
   @Test
   public void testLoadingDefaults() throws Exception {
-    new SystemDirectiveRegistry();
+    try (SystemDirectiveRegistry registry = new SystemDirectiveRegistry()) {
+      // Test logic can be added here if needed
+    }
   }
 
 }
